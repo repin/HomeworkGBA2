@@ -1,10 +1,9 @@
 ﻿using MetricsAgent.Controllers;
+using MetricsAgent.Models;
+using MetricsAgent.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MetricsAgentTests
 {
@@ -15,19 +14,34 @@ namespace MetricsAgentTests
     public class NetworkMetricsControllerTests
     {
         private NetworkMetricsController _networkMetricsController;
+        private Mock<INetworkMetricsRepository> _mock;
+        private Mock<ILogger<NetworkMetricsController>> _logger;
+
 
         public NetworkMetricsControllerTests()
         {
-            _networkMetricsController = new NetworkMetricsController();
+            _mock = new Mock<INetworkMetricsRepository>();
+            _logger = new Mock<ILogger<NetworkMetricsController>>();
+            _networkMetricsController = new NetworkMetricsController(_mock.Object, _logger.Object);
         }
 
         [Fact]
-        public void GetCpuMetrics_ReturnOk()
+        public void GetNetworkMetrics_ReturnOk()
         {
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
             var result = _networkMetricsController.GetNetworkMetrics(fromTime, toTime);
-            Assert.IsAssignableFrom<IActionResult>(result);
+            Assert.IsAssignableFrom<ActionResult<IList<NetworkMetric>>>(result);
         }
+        [Fact]
+        public void Create_ShouldCall_Create_From_Repository()
+        {
+            _mock.Setup(repository => repository.Create(It.IsAny<NetworkMetric>())).Verifiable();
+            var result = _networkMetricsController.Create(new MetricsAgent.Models.Requests.NetworkMetricCreateRequest { Time = TimeSpan.FromSeconds(1), Value = 50 });
+            _mock.Verify(repository => repository.Create(It.IsAny<NetworkMetric>()), Times.AtMostOnce());
+        }
+
+
     }
 }
+

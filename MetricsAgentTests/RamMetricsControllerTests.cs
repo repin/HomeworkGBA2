@@ -1,10 +1,9 @@
 ﻿using MetricsAgent.Controllers;
+using MetricsAgent.Models;
+using MetricsAgent.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MetricsAgentTests
 {
@@ -15,19 +14,32 @@ namespace MetricsAgentTests
     public class RamMetricsControllerTests
     {
         private RamMetricsController _ramMetricsController;
+        private Mock<IRamMetricsRepository> _mock;
+        private Mock<ILogger<RamMetricsController>> _logger;
+
 
         public RamMetricsControllerTests()
         {
-            _ramMetricsController = new RamMetricsController();
+            _mock = new Mock<IRamMetricsRepository>();
+            _logger = new Mock<ILogger<RamMetricsController>>();
+            _ramMetricsController = new RamMetricsController(_mock.Object, _logger.Object);
         }
 
         [Fact]
-        public void GetCpuMetrics_ReturnOk()
+        public void GetRamMetrics_ReturnOk()
         {
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
             var result = _ramMetricsController.GetRamMetrics(fromTime, toTime);
-            Assert.IsAssignableFrom<IActionResult>(result);
+            Assert.IsAssignableFrom<ActionResult<IList<RamMetric>>>(result);
         }
+        [Fact]
+        public void Create_ShouldCall_Create_From_Repository()
+        {
+            _mock.Setup(repository => repository.Create(It.IsAny<RamMetric>())).Verifiable();
+            var result = _ramMetricsController.Create(new MetricsAgent.Models.Requests.RamMetricCreateRequest { Time = TimeSpan.FromSeconds(1), Value = 50 });
+            _mock.Verify(repository => repository.Create(It.IsAny<RamMetric>()), Times.AtMostOnce());
+        }
+
     }
 }
