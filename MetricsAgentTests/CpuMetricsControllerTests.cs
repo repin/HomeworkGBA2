@@ -1,33 +1,43 @@
 ﻿using MetricsAgent.Controllers;
+using MetricsAgent.Models;
+using MetricsAgent.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MetricsAgentTests
 {
-    // TODO: Домашнее задание [Пункт 3]
-    //  Добавьте проект с тестами для агента сбора метрик. Напишите простые Unit-тесты на каждый
-    // метод отдельно взятого контроллера в обоих тестовых проектах.
+
 
     public class CpuMetricsControllerTests
     {
         private CpuMetricsController _cpuMetricsController;
+        private Mock<ICpuMetricsRepository> _mock;
+        private Mock<ILogger<CpuMetricsController>> _logger;
 
         public CpuMetricsControllerTests()
         {
-            _cpuMetricsController = new CpuMetricsController();
-        }
+            _mock = new Mock<ICpuMetricsRepository>();
+            _logger =  new Mock<ILogger<CpuMetricsController>>();
+            _cpuMetricsController = new CpuMetricsController(_mock.Object,_logger.Object);
+        } 
 
-        [Fact]
+
+        [Fact]  
         public void GetCpuMetrics_ReturnOk()
         {
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
             var result = _cpuMetricsController.GetCpuMetrics(fromTime, toTime);
-            Assert.IsAssignableFrom<IActionResult>(result);
+            Assert.IsAssignableFrom<ActionResult<IList<CpuMetric>>>(result);
+        }
+
+        [Fact]
+        public void Create_ShouldCall_Create_From_Repository()
+        {
+            _mock.Setup(repository => repository.Create(It.IsAny<CpuMetric>())).Verifiable();
+            var result = _cpuMetricsController.Create(new MetricsAgent.Models.Requests.CpuMetricCreateRequest { Time = TimeSpan.FromSeconds(1), Value = 50 });
+            _mock.Verify(repository => repository.Create(It.IsAny<CpuMetric>()), Times.AtMostOnce());
         }
     }
 }

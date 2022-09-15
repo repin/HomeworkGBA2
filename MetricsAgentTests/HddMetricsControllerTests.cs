@@ -1,10 +1,9 @@
 ﻿using MetricsAgent.Controllers;
+using MetricsAgent.Models;
+using MetricsAgent.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MetricsAgentTests
 {
@@ -15,19 +14,32 @@ namespace MetricsAgentTests
     public class HddMetricsControllerTests
     {
         private HddMetricsController _hddMetricsController;
+        private Mock<IHddMetricsRepository> _mock;
+        private Mock<ILogger<HddMetricsController>> _logger;
+
 
         public HddMetricsControllerTests()
         {
-            _hddMetricsController = new HddMetricsController();
+            _mock = new Mock<IHddMetricsRepository>();
+            _logger = new Mock<ILogger<HddMetricsController>>();
+            _hddMetricsController = new HddMetricsController(_mock.Object, _logger.Object);
         }
 
         [Fact]
-        public void GetCpuMetrics_ReturnOk()
+        public void GetHddMetrics_ReturnOk()
         {
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
             var result = _hddMetricsController.GetHddMetrics(fromTime, toTime);
-            Assert.IsAssignableFrom<IActionResult>(result);
+            Assert.IsAssignableFrom<ActionResult<IList<HddMetric>>>(result);
         }
+        [Fact]
+        public void Create_ShouldCall_Create_From_Repository()
+        {
+            _mock.Setup(repository => repository.Create(It.IsAny<HddMetric>())).Verifiable();
+            var result = _hddMetricsController.Create(new MetricsAgent.Models.Requests.HddMetricCreateRequest { Time = TimeSpan.FromSeconds(1), Value = 50 });
+            _mock.Verify(repository => repository.Create(It.IsAny<HddMetric>()), Times.AtMostOnce());
+        }
+
     }
 }

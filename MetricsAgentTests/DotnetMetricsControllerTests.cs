@@ -1,10 +1,9 @@
 ﻿using MetricsAgent.Controllers;
+using MetricsAgent.Models;
+using MetricsAgent.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MetricsAgentTests
 {
@@ -14,20 +13,35 @@ namespace MetricsAgentTests
 
     public class DotnetMetricsControllerTests
     {
-        private DotnetMerticsController _dotnetMetricsController;
+        private DotnetMetricsController _dotnetMetricsController;
+        private Mock<IDotnetMetricsRepository> _mock;
+        private Mock<ILogger<DotnetMetricsController>> _logger;
+
 
         public DotnetMetricsControllerTests()
         {
-            _dotnetMetricsController = new DotnetMerticsController();
+            _mock = new Mock<IDotnetMetricsRepository>();
+            _logger = new Mock<ILogger<DotnetMetricsController>>();
+
+            _dotnetMetricsController = new DotnetMetricsController(_mock.Object, _logger.Object);
         }
 
+
         [Fact]
-        public void GetCpuMetrics_ReturnOk()
+        public void GetDotnetMetrics_ReturnOk()
         {
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
             var result = _dotnetMetricsController.GetDotnetMetrics(fromTime, toTime);
-            Assert.IsAssignableFrom<IActionResult>(result);
+            Assert.IsAssignableFrom<ActionResult<IList<DotnetMetric>>>(result);
         }
+        [Fact]
+        public void Create_ShouldCall_Create_From_Repository()
+        {
+            _mock.Setup(repository => repository.Create(It.IsAny<DotnetMetric>())).Verifiable();
+            var result = _dotnetMetricsController.Create(new MetricsAgent.Models.Requests.DotnetMetricCreateRequest { Time = TimeSpan.FromSeconds(1), Value = 50 });
+            _mock.Verify(repository => repository.Create(It.IsAny<DotnetMetric>()), Times.AtMostOnce());
+        }
+
     }
 }
