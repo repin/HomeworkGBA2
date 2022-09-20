@@ -1,4 +1,6 @@
+using AutoMapper;
 using MetricsAgent.Converters;
+using MetricsAgent.Models;
 using MetricsAgent.Services;
 using MetricsAgent.Services.Impl;
 using Microsoft.AspNetCore.HttpLogging;
@@ -17,6 +19,24 @@ namespace MetricsAgent
 
             // Add services to the container.
 
+            #region Configure Automapper
+
+            var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new
+                MapperProfile()));
+            var mapper = mapperConfiguration.CreateMapper();
+            builder.Services.AddSingleton(mapper);
+
+            #endregion
+
+            #region Configure Options
+
+            builder.Services.Configure<DatabaseOptions>(options =>
+            {
+                builder.Configuration.GetSection("Settings:DatabaseOptions").Bind(options);
+            });
+
+            #endregion
+
             #region Configure Repository
 
             builder.Services.AddScoped<ICpuMetricsRepository, CpuMetricsRepository>();
@@ -29,7 +49,7 @@ namespace MetricsAgent
 
             #region Configure Database
 
-            ConfigureSqlLiteConnection(builder.Services);
+            ConfigureSqlLiteConnection(builder);
 
             #endregion
             #region Configure logging
@@ -88,10 +108,9 @@ namespace MetricsAgent
             app.Run();
         }
 
-        private static void ConfigureSqlLiteConnection(IServiceCollection services)
+        private static void ConfigureSqlLiteConnection(WebApplicationBuilder? builder)
         {
-            const string connectionString = "Data Source = metrics.db; Version = 3; Pooling = true; Max Pool Size = 100;";
-            var connection = new SQLiteConnection(connectionString);
+            var connection = new SQLiteConnection(builder.Configuration["Settings:DatabaseOptions:ConnectionString"].ToString());
             connection.Open();
             PrepareSchema(connection);
         }

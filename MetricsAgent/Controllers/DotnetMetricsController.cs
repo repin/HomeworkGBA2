@@ -1,4 +1,6 @@
-﻿using MetricsAgent.Models;
+﻿using AutoMapper;
+using MetricsAgent.Models;
+using MetricsAgent.Models.Dto;
 using MetricsAgent.Models.Requests;
 using MetricsAgent.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -12,44 +14,43 @@ namespace MetricsAgent.Controllers
         #region Services
 
         private readonly ILogger<DotnetMetricsController> _logger;
-        private readonly IDotnetMetricsRepository _dotnetMetricsRepository;
+        private readonly IDotnetMetricsRepository _hddMetricsRepository;
+        private readonly IMapper _mapper;
+
         #endregion
 
 
         public DotnetMetricsController(
-            IDotnetMetricsRepository dotnetMetricsRepository,
-            ILogger<DotnetMetricsController> logger)
+            IDotnetMetricsRepository hddMetricsRepository,
+            ILogger<DotnetMetricsController> logger,
+            IMapper mapper)
         {
-            _dotnetMetricsRepository = dotnetMetricsRepository;
+            _hddMetricsRepository = hddMetricsRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         [HttpPost("create")]
         public IActionResult Create([FromBody] DotnetMetricCreateRequest request)
         {
-            _dotnetMetricsRepository.Create(new Models.DotnetMetric
-            {
-                Value = request.Value,
-                Time = (int)request.Time.TotalSeconds
-            });
-            _logger.LogInformation("Create dotnet metrics.");
-
+            _hddMetricsRepository.Create(_mapper.Map<DotnetMetric>(request));
             return Ok();
         }
 
         /// <summary>
-        /// Получить статистику по количеству ошибок DotNet за период
+        /// Получить статистику по нагрузке на ЦП за период
         /// </summary>
         /// <param name="fromTime">Время начала периода</param>
         /// <param name="toTime">Время окончания периода</param>
         /// <returns></returns>
         [HttpGet("from/{fromTime}/to/{toTime}")]
-        public ActionResult<IList<DotnetMetric>> GetDotnetMetrics(
+        public ActionResult<IList<DotnetMetricDto>> GetDotnetMetrics(
             [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
         {
+            _logger.LogInformation("Get cpu metrics call.");
 
-            _logger.LogInformation("Get dotnet metrics call.");
-            return Ok(_dotnetMetricsRepository.GetByTimePeriod(fromTime, toTime));
+            return Ok(_hddMetricsRepository.GetByTimePeriod(fromTime, toTime)
+                .Select(metric => _mapper.Map<DotnetMetricDto>(metric)).ToList());
         }
 
 
