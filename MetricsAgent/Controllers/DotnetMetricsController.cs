@@ -14,18 +14,18 @@ namespace MetricsAgent.Controllers
         #region Services
 
         private readonly ILogger<DotnetMetricsController> _logger;
-        private readonly IDotnetMetricsRepository _hddMetricsRepository;
+        private readonly IDotnetMetricsRepository _dotnetMetricsRepository;
         private readonly IMapper _mapper;
 
         #endregion
 
 
         public DotnetMetricsController(
-            IDotnetMetricsRepository hddMetricsRepository,
+            IDotnetMetricsRepository dotnetMetricsRepository,
             ILogger<DotnetMetricsController> logger,
             IMapper mapper)
         {
-            _hddMetricsRepository = hddMetricsRepository;
+            _dotnetMetricsRepository = dotnetMetricsRepository;
             _logger = logger;
             _mapper = mapper;
         }
@@ -33,7 +33,7 @@ namespace MetricsAgent.Controllers
         [HttpPost("create")]
         public IActionResult Create([FromBody] DotnetMetricCreateRequest request)
         {
-            _hddMetricsRepository.Create(_mapper.Map<DotnetMetric>(request));
+            _dotnetMetricsRepository.Create(_mapper.Map<DotnetMetric>(request));
             return Ok();
         }
 
@@ -49,7 +49,13 @@ namespace MetricsAgent.Controllers
         {
             _logger.LogInformation("Get cpu metrics call.");
 
-            return Ok(_hddMetricsRepository.GetByTimePeriod(fromTime, toTime)
+            return Ok(_dotnetMetricsRepository.GetByTimePeriod(fromTime, toTime)
+                .Select(metric => _mapper.Map<DotnetMetricDto>(metric)).ToList());
+        }
+        [HttpGet("all")]
+        public ActionResult<IList<DotnetMetricDto>> GetAllCpuMetrics()
+        {
+            return Ok(_dotnetMetricsRepository.GetAll()
                 .Select(metric => _mapper.Map<DotnetMetricDto>(metric)).ToList());
         }
 

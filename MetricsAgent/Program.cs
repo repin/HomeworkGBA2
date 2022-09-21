@@ -1,5 +1,7 @@
 using AutoMapper;
+using FluentMigrator.Runner;
 using MetricsAgent.Converters;
+using MetricsAgent.Job;
 using MetricsAgent.Models;
 using MetricsAgent.Services;
 using MetricsAgent.Services.Impl;
@@ -7,7 +9,9 @@ using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using NLog.Web;
-using System.Data.SQLite;
+using Quartz;
+using Quartz.Impl;
+using Quartz.Spi;
 
 namespace MetricsAgent
 {
@@ -39,17 +43,48 @@ namespace MetricsAgent
 
             #region Configure Repository
 
-            builder.Services.AddScoped<ICpuMetricsRepository, CpuMetricsRepository>();
-            builder.Services.AddScoped<IRamMetricsRepository, RamMetricsRepository>();
-            builder.Services.AddScoped<IHddMetricsRepository, HddMetricsRepository>();
-            builder.Services.AddScoped<INetworkMetricsRepository, NetworkMetricsRepository>();
+            builder.Services.AddSingleton<ICpuMetricsRepository, CpuMetricsRepository>();
+            builder.Services.AddSingleton<IRamMetricsRepository, RamMetricsRepository>();
+            builder.Services.AddSingleton<IHddMetricsRepository, HddMetricsRepository>();
+            builder.Services.AddSingleton<INetworkMetricsRepository, NetworkMetricsRepository>();
             builder.Services.AddScoped<IDotnetMetricsRepository, DotnetMetricsRepository>();
+
+            #endregion
+            #region Configure Jobs
+
+            // Регистрация сервиса фабрики
+            builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
+            // Регистрация базового сервиса Quartz
+            builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+            // Регистрация сервиса самой задачи
+            builder.Services.AddSingleton<CpuMetricJob>();
+            builder.Services.AddSingleton<RamMetricJob>();
+            builder.Services.AddSingleton<NetworkMetricJob>();
+            builder.Services.AddSingleton<HddMetricJob>();
+            builder.Services.AddSingleton<DotnetMetricJob>();
+
+            // https://www.freeformatter.com/cron-expression-generator-quartz.html
+            builder.Services.AddSingleton(new JobSchedule(typeof(CpuMetricJob), "0/5 * * ? * * *"));
+            builder.Services.AddSingleton(new JobSchedule(typeof(RamMetricJob), "0/5 * * ? * * *"));
+            builder.Services.AddSingleton(new JobSchedule(typeof(HddMetricJob), "0/5 * * ? * * *"));
+            builder.Services.AddSingleton(new JobSchedule(typeof(NetworkMetricJob), "0/5 * * ? * * *"));
+            builder.Services.AddSingleton(new JobSchedule(typeof(DotnetMetricJob), "0/5 * * ? * * *"));
+
+            builder.Services.AddHostedService<QuartzHostedService>();
 
             #endregion
 
             #region Configure Database
 
-            ConfigureSqlLiteConnection(builder);
+            //ConfigureSqlLiteConnection(builder);
+
+            builder.Services.AddFluentMigratorCore()
+                .ConfigureRunner(rb =>
+                rb.AddSQLite()
+                .WithGlobalConnectionString(builder.Configuration["Settings:DatabaseOptions:ConnectionString"].ToString())
+                .ScanIn(typeof(Program).Assembly).For.Migrations()
+                ).AddLogging(lb => lb.AddFluentMigratorConsole());
+
 
             #endregion
             #region Configure logging
@@ -104,80 +139,16 @@ namespace MetricsAgent
 
 
             app.MapControllers();
-
-            app.Run();
-        }
-
-        private static void ConfigureSqlLiteConnection(WebApplicationBuilder? builder)
-        {
-            var connection = new SQLiteConnection(builder.Configuration["Settings:DatabaseOptions:ConnectionString"].ToString());
-            connection.Open();
-            PrepareSchema(connection);
-        }
-
-        private static void PrepareSchema(SQLiteConnection connection)
-        {
-            using (var command = new SQLiteCommand(connection))
+            var serviceScopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+            using (IServiceScope serviceScope = serviceScopeFactory.CreateScope())
             {
-                #region create table cpumetrics
-                // Задаём новый текст команды для выполнения
-                // Удаляем таблицу с метриками, если она есть в базе данных
-                command.CommandText = "DROP TABLE IF EXISTS cpumetrics";
-                // Отправляем запрос в базу данных
-                command.ExecuteNonQuery();
-                command.CommandText =
-                    @"CREATE TABLE cpumetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)";
-                command.ExecuteNonQuery();
-                #endregion
-
-
-                #region create table rammetrics
-                command.CommandText = "DROP TABLE IF EXISTS rammetrics";
-                // Отправляем запрос в базу данных
-                command.ExecuteNonQuery();
-                command.CommandText =
-                    @"CREATE TABLE rammetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)";
-                command.ExecuteNonQuery();
-                #endregion
-
-                #region create table rammetrics
-                command.CommandText = "DROP TABLE IF EXISTS hddmetrics";
-                // Отправляем запрос в базу данных
-                command.ExecuteNonQuery();
-                command.CommandText =
-                    @"CREATE TABLE hddmetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)";
-                command.ExecuteNonQuery();
-                #endregion
-
-                #region create table rammetrics
-                command.CommandText = "DROP TABLE IF EXISTS networkmetrics";
-                // Отправляем запрос в базу данных
-                command.ExecuteNonQuery();
-                command.CommandText =
-                    @"CREATE TABLE networkmetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)";
-                command.ExecuteNonQuery();
-                #endregion
-
-                #region create table rammetrics
-                command.CommandText = "DROP TABLE IF EXISTS dotnetmetrics";
-                // Отправляем запрос в базу данных
-                command.ExecuteNonQuery();
-                command.CommandText =
-                    @"CREATE TABLE dotnetmetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)";
-                command.ExecuteNonQuery();
-                #endregion
+                var migrationRunner = serviceScope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+                migrationRunner.MigrateUp();
 
             }
+
+
+            app.Run();
         }
     }
 }

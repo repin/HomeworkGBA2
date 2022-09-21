@@ -37,6 +37,14 @@ namespace MetricsAgent.Controllers
         [HttpPost("create")]
         public IActionResult Create([FromBody] CpuMetricCreateRequest request)
         {
+            // Вариант 1
+            //_cpuMetricsRepository.Create(new Models.CpuMetric
+            //{
+            //    Value = request.Value,
+            //    Time = (int)request.Time.TotalSeconds
+            //});
+
+            // Вариант 2 (AutoMapper)
             _cpuMetricsRepository.Create(_mapper.Map<CpuMetric>(request));
             return Ok();
         }
@@ -53,7 +61,33 @@ namespace MetricsAgent.Controllers
         {
             _logger.LogInformation("Get cpu metrics call.");
 
+            // Вариант 1:
+            //List<CpuMetricDto> list = new List<CpuMetricDto>();
+            //foreach(var metric in _cpuMetricsRepository.GetByTimePeriod(fromTime, toTime))
+            //{
+            //    list.Add(new CpuMetricDto
+            //    {
+            //        Value = metric.Value,
+            //        Time = metric.Time
+            //    });
+            //}
+
+            // Вариант 2:
+            //return Ok(_cpuMetricsRepository.GetByTimePeriod(fromTime, toTime).Select(metric => new CpuMetricDto
+            //{
+            //    Time = metric.Time,
+            //    Value = metric.Value
+            //}).ToList());
+
+            // Вариант 3 (AutoMapper)
             return Ok(_cpuMetricsRepository.GetByTimePeriod(fromTime, toTime)
+                .Select(metric => _mapper.Map<CpuMetricDto>(metric)).ToList());
+        }
+
+        [HttpGet("all")]
+        public ActionResult<IList<CpuMetricDto>> GetAllCpuMetrics()
+        {
+            return Ok(_cpuMetricsRepository.GetAll()
                 .Select(metric => _mapper.Map<CpuMetricDto>(metric)).ToList());
         }
 
