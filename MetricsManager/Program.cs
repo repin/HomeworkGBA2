@@ -1,4 +1,6 @@
 using MetricsManager.Models;
+using Microsoft.AspNetCore.HttpLogging;
+using NLog.Web;
 
 namespace MetricsManager
 {
@@ -9,6 +11,27 @@ namespace MetricsManager
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            #region Configure logging
+
+            builder.Host.ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+
+            }).UseNLog(new NLogAspNetCoreOptions() { RemoveLoggerFactoryFilter = true });
+
+            builder.Services.AddHttpLogging(logging =>
+            {
+                logging.LoggingFields = HttpLoggingFields.All | HttpLoggingFields.RequestQuery;
+                logging.RequestBodyLogLimit = 4096;
+                logging.ResponseBodyLogLimit = 4096;
+                logging.RequestHeaders.Add("Authorization");
+                logging.RequestHeaders.Add("X-Real-IP");
+                logging.RequestHeaders.Add("X-Forwarded-For");
+            });
+
+            #endregion
+
 
             builder.Services.AddSingleton<AgentPool>();
 
