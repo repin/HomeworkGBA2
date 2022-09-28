@@ -2,8 +2,8 @@
 {
     public class AgentInfo
     {
-        public int AgentId { get; set; }
-        public Uri AgentAddress { get; set; }
+        public int id { get; set; }
+        public string AgentAddress { get; set; }
         public bool Enable { get; set; }
     }
 }
