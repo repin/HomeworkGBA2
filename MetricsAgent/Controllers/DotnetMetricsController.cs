@@ -49,8 +49,11 @@ namespace MetricsAgent.Controllers
         {
             _logger.LogInformation("Get cpu metrics call.");
 
-            return Ok(_dotnetMetricsRepository.GetByTimePeriod(fromTime, toTime)
-                .Select(metric => _mapper.Map<DotnetMetricDto>(metric)).ToList());
+            return Ok(new GetDotnetMetricsResponse
+            {
+                Metrics = _dotnetMetricsRepository.GetByTimePeriod(fromTime, toTime)
+            .Select(metric => _mapper.Map<DotnetMetricDto>(metric)).ToList()
+            });
         }
         [HttpGet("all")]
         public ActionResult<IList<DotnetMetricDto>> GetAllCpuMetrics()

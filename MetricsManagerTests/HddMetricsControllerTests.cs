@@ -1,25 +1,21 @@
 ﻿using MetricsManager.Controllers;
+using MetricsManager.Services.Client;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MetricsManagerTests
 {
     public class HddMetricsControllerTests
     {
         private HddMetricsController _hddMetricsController;
-        private Mock<ILogger<HddMetricsController>> _logger;
-
+        private Mock<IMetricsAgentClient> _metricsAgentClient;
+        private Mock<IHttpClientFactory> _httpClientFactory;
 
         public HddMetricsControllerTests()
         {
-            _logger = new Mock<ILogger<HddMetricsController>>();
-            _hddMetricsController = new HddMetricsController(_logger.Object);
+            _metricsAgentClient = new Mock<IMetricsAgentClient>();
+            _httpClientFactory = new Mock<IHttpClientFactory>();
+            _hddMetricsController = new HddMetricsController(_metricsAgentClient.Object, _httpClientFactory.Object);
         }
 
         [Fact]
@@ -41,7 +37,7 @@ namespace MetricsManagerTests
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
 
-            var result = _hddMetricsController.GetMetricsFromAll( fromTime, toTime);
+            var result = _hddMetricsController.GetMetricsFromAll(fromTime, toTime);
 
             Assert.IsAssignableFrom<IActionResult>(result);
         }

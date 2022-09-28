@@ -47,7 +47,7 @@ namespace MetricsAgent
             builder.Services.AddSingleton<IRamMetricsRepository, RamMetricsRepository>();
             builder.Services.AddSingleton<IHddMetricsRepository, HddMetricsRepository>();
             builder.Services.AddSingleton<INetworkMetricsRepository, NetworkMetricsRepository>();
-            builder.Services.AddScoped<IDotnetMetricsRepository, DotnetMetricsRepository>();
+            builder.Services.AddSingleton<IDotnetMetricsRepository, DotnetMetricsRepository>();
 
             #endregion
             #region Configure Jobs

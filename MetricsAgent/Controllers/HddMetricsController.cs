@@ -53,8 +53,11 @@ namespace MetricsAgent.Controllers
         {
             _logger.LogInformation("Get hdd metrics call.");
 
-            return Ok(_hddMetricsRepository.GetByTimePeriod(fromTime, toTime)
-                .Select(metric => _mapper.Map<HddMetricDto>(metric)).ToList());
+            return Ok(new GetHddMetricsResponse
+            {
+                Metrics = _hddMetricsRepository.GetByTimePeriod(fromTime, toTime)
+            .Select(metric => _mapper.Map<HddMetricDto>(metric)).ToList()
+            });
         }
 
         [HttpGet("all")]

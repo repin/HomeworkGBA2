@@ -1,29 +1,27 @@
 ﻿using MetricsManager.Controllers;
+using MetricsManager.Services.Client;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MetricsManagerTests
 {
     public class CpuMetricsControllerTests
     {
         private CpuMetricsController _cpuMetricsController;
-        private Mock<ILogger<CpuMetricsController>> _logger;
+        private Mock<IMetricsAgentClient> _metricsAgentClient;
+        private Mock<IHttpClientFactory> _httpClientFactory;
 
         public CpuMetricsControllerTests()
         {
-            _logger = new Mock<ILogger<CpuMetricsController>>();
-            _cpuMetricsController = new CpuMetricsController(_logger.Object);
+            _metricsAgentClient = new Mock<IMetricsAgentClient>();
+            _httpClientFactory = new Mock<IHttpClientFactory>();
+            _cpuMetricsController = new CpuMetricsController(_metricsAgentClient.Object,_httpClientFactory.Object);
         }
 
         [Fact]
         public void GetMetricsFromAgent_ReturnOk()
         {
+            
             int agentId = 1;
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);

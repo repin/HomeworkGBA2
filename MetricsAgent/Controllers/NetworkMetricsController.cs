@@ -53,8 +53,11 @@ namespace MetricsAgent.Controllers
         {
             _logger.LogInformation("Get cpu metrics call.");
 
-            return Ok(_networkMetricsRepository.GetByTimePeriod(fromTime, toTime)
-                .Select(metric => _mapper.Map<NetworkMetricDto>(metric)).ToList());
+            return Ok(new GetNetworkMetricsResponse
+            {
+                Metrics = _networkMetricsRepository.GetByTimePeriod(fromTime, toTime)
+                    .Select(metric => _mapper.Map<NetworkMetricDto>(metric)).ToList()
+            });
         }
 
         [HttpGet("all")]

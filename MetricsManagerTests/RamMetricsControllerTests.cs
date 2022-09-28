@@ -1,25 +1,21 @@
 ﻿using MetricsManager.Controllers;
+using MetricsManager.Services.Client;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MetricsManagerTests
 {
     public class RamMetricsControllerTests
     {
         private RamMetricsController _ramMetricsController;
-        private Mock<ILogger<RamMetricsController>> _logger;
-
+        private Mock<IMetricsAgentClient> _metricsAgentClient;
+        private Mock<IHttpClientFactory> _httpClientFactory;
 
         public RamMetricsControllerTests()
         {
-            _logger = new Mock<ILogger<RamMetricsController>>();
-            _ramMetricsController = new RamMetricsController(_logger.Object);
+            _metricsAgentClient = new Mock<IMetricsAgentClient>();
+            _httpClientFactory = new Mock<IHttpClientFactory>();
+            _ramMetricsController = new RamMetricsController(_metricsAgentClient.Object, _httpClientFactory.Object);
         }
 
         [Fact]
@@ -41,7 +37,7 @@ namespace MetricsManagerTests
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
 
-            var result = _ramMetricsController.GetMetricsFromAll( fromTime, toTime);
+            var result = _ramMetricsController.GetMetricsFromAll(fromTime, toTime);
 
             Assert.IsAssignableFrom<IActionResult>(result);
         }

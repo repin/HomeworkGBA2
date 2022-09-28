@@ -80,8 +80,11 @@ namespace MetricsAgent.Controllers
             //}).ToList());
 
             // Вариант 3 (AutoMapper)
-            return Ok(_cpuMetricsRepository.GetByTimePeriod(fromTime, toTime)
-                .Select(metric => _mapper.Map<CpuMetricDto>(metric)).ToList());
+            return Ok(new GetCpuMetricsResponse
+            {
+                Metrics = _cpuMetricsRepository.GetByTimePeriod(fromTime, toTime)
+                        .Select(metric => _mapper.Map<CpuMetricDto>(metric)).ToList()
+            });
         }
 
         [HttpGet("all")]

@@ -53,8 +53,11 @@ namespace MetricsAgent.Controllers
         {
             _logger.LogInformation("Get cpu metrics call.");
 
-            return Ok(_ramMetricsRepository.GetByTimePeriod(fromTime, toTime)
-                .Select(metric => _mapper.Map<RamMetricDto>(metric)).ToList());
+            return Ok(new GetRamMetricsResponse
+            {
+                Metrics = _ramMetricsRepository.GetByTimePeriod(fromTime, toTime)
+            .Select(metric => _mapper.Map<RamMetricDto>(metric)).ToList()
+            });
         }
         [HttpGet("all")]
         public ActionResult<IList<RamMetricDto>> GetAllCpuMetrics()
