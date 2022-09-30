@@ -37,13 +37,5 @@ namespace MetricsManager.Controllers
                 ToTime = toTime
             }));
         }
-
-
-        [HttpGet("all/from/{fromTime}/to/{toTime}")]
-        public IActionResult GetMetricsFromAll(
-            [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
-        {
-            return Ok();
-        }
     }
 }
