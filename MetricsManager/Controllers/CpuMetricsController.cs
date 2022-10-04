@@ -26,9 +26,9 @@ namespace MetricsManager.Controllers
             _metricsAgentClient = metricsAgentClient;
         }
 
-        [HttpGet("agent/{agentId}/from/{fromTime}/to/{toTime}")]
+        [HttpGet("agent-by-id")]
         public ActionResult<CpuMetricsResponse> GetMetricsFromAgent(
-            [FromRoute] int agentId, [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] int agentId, [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok(_metricsAgentClient.GetCpuMetrics(new CpuMetricsRequest
             {
@@ -36,6 +36,12 @@ namespace MetricsManager.Controllers
                 FromTime = fromTime,
                 ToTime = toTime
             }));
+        }
+        [HttpGet("get-all")]
+        public IActionResult GetMetricsFromAll(
+            [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
+        {
+            return Ok();
         }
     }
 }

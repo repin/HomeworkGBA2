@@ -26,9 +26,9 @@ namespace MetricsManager.Controllers
             _metricsAgentClient = metricsAgentClient;
         }
 
-        [HttpGet("agent/{agentId}/from/{fromTime}/to/{toTime}")]
+        [HttpGet("agent-by-id")]
         public ActionResult<HddMetricsResponse> GetMetricsFromAgent(
-            [FromRoute] int agentId, [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] int agentId, [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok(_metricsAgentClient.GetHddMetrics(new HddMetricsRequest
             {
@@ -39,9 +39,9 @@ namespace MetricsManager.Controllers
         }
 
 
-        [HttpGet("all/from/{fromTime}/to/{toTime}")]
+        [HttpGet("get-all")]
         public IActionResult GetMetricsFromAll(
-            [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok();
         }

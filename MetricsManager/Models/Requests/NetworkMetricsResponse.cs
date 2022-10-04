@@ -11,6 +11,6 @@ namespace MetricsManager.Models.Requests
         public int AgentId { get; set; }
 
         [JsonPropertyName("metrics")]
-        public CpuMetric[] Metrics { get; set; }
+        public NetworkMetric[] Metrics { get; set; }
     }
 }
