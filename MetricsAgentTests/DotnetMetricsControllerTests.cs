@@ -1,33 +1,47 @@
-﻿using MetricsAgent.Controllers;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AutoMapper;
+using MetricsAgent.Controllers;
+using MetricsAgent.Models;
+using MetricsAgent.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MetricsAgentTests
 {
-    // TODO: Домашнее задание [Пункт 3]
-    //  Добавьте проект с тестами для агента сбора метрик. Напишите простые Unit-тесты на каждый
-    // метод отдельно взятого контроллера в обоих тестовых проектах.
+
 
     public class DotnetMetricsControllerTests
     {
-        private DotnetMerticsController _dotnetMetricsController;
+        private DotnetMetricsController _DotnetMetricsController;
+        private Mock<IDotnetMetricsRepository> _mockRepository;
+        private Mock<ILogger<DotnetMetricsController>> _mockLogger;
+        private Mock<IMapper> _mockMapper;
 
         public DotnetMetricsControllerTests()
         {
-            _dotnetMetricsController = new DotnetMerticsController();
+            _mockRepository = new Mock<IDotnetMetricsRepository>();
+            _mockLogger = new Mock<ILogger<DotnetMetricsController>>();
+            _mockMapper = new Mock<IMapper>();
+            _DotnetMetricsController = new DotnetMetricsController(_mockRepository.Object, _mockLogger.Object, _mockMapper.Object);
+        }
+
+
+        [Fact]
+        public void GetDotnetMetrics_ReturnOk()
+        {
+            _mockRepository.Setup(repository => repository.GetByTimePeriod(It.IsAny<TimeSpan>(), It.IsAny<TimeSpan>())).Returns(new List<DotnetMetric>());
+            TimeSpan fromTime = TimeSpan.FromSeconds(0);
+            TimeSpan toTime = TimeSpan.FromSeconds(100);
+            var result = _DotnetMetricsController.GetDotnetMetrics(fromTime, toTime);
+            _mockRepository.Verify(repository =>
+                repository.GetByTimePeriod(It.IsAny<TimeSpan>(), It.IsAny<TimeSpan>()));
         }
 
         [Fact]
-        public void GetCpuMetrics_ReturnOk()
+        public void Create_ShouldCall_Create_From_Repository()
         {
-            TimeSpan fromTime = TimeSpan.FromSeconds(0);
-            TimeSpan toTime = TimeSpan.FromSeconds(100);
-            var result = _dotnetMetricsController.GetDotnetMetrics(fromTime, toTime);
-            Assert.IsAssignableFrom<IActionResult>(result);
+            _mockRepository.Setup(repository => repository.Create(It.IsAny<DotnetMetric>())).Verifiable();
+            var result = _DotnetMetricsController.Create(new MetricsAgent.Models.Requests.DotnetMetricCreateRequest { Time = TimeSpan.FromSeconds(1), Value = 50 });
+            _mockRepository.Verify(repository => repository.Create(It.IsAny<DotnetMetric>()), Times.AtMostOnce());
         }
     }
 }

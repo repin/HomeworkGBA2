@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MetricsManager.Models.Requests;
+using MetricsManager.Services.Client;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetricsManager.Controllers
@@ -7,16 +8,38 @@ namespace MetricsManager.Controllers
     [ApiController]
     public class CpuMetricsController : ControllerBase
     {
-        [HttpGet("agent/{agentId}/from/{fromTime}/to/{toTime}")]
-        public IActionResult GetMetricsFromAgent(
-            [FromRoute] int agentId, [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+
+        #region Services
+
+        private IHttpClientFactory _httpClientFactory;
+        private IMetricsAgentClient _metricsAgentClient;
+
+        #endregion
+
+
+        public CpuMetricsController(
+            IMetricsAgentClient metricsAgentClient,
+            IHttpClientFactory httpClientFactory
+            )
         {
-            return Ok();
+            _httpClientFactory = httpClientFactory;
+            _metricsAgentClient = metricsAgentClient;
         }
 
-        [HttpGet("all/from/{fromTime}/to/{toTime}")]
+        [HttpGet("agent-by-id")]
+        public ActionResult<CpuMetricsResponse> GetMetricsFromAgent(
+            [FromQuery] int agentId, [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
+        {
+            return Ok(_metricsAgentClient.GetCpuMetrics(new CpuMetricsRequest
+            {
+                AgentId = agentId,
+                FromTime = fromTime,
+                ToTime = toTime
+            }));
+        }
+        [HttpGet("get-all")]
         public IActionResult GetMetricsFromAll(
-            [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok();
         }

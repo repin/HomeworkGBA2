@@ -1,5 +1,7 @@
-﻿using MetricsManager.Models;
-using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using MetricsManager.Models;
+using MetricsManager.Models.Dto;
+using MetricsManager.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetricsManager.Controllers
@@ -11,15 +13,18 @@ namespace MetricsManager.Controllers
 
         #region Services
 
-        private readonly AgentPool _agentPool;
+        private readonly IAgentRepository _agentRepository;
+        private readonly IMapper _mapper;
+
 
         #endregion
 
         #region Constuctors
 
-        public AgentsController(AgentPool agentPool)
+        public AgentsController(IAgentRepository agentRepository, IMapper mapper)
         {
-            _agentPool = agentPool;
+            _agentRepository = agentRepository;
+            _mapper = mapper;
         }
 
         #endregion
@@ -27,39 +32,39 @@ namespace MetricsManager.Controllers
         #region Public Methods
 
         [HttpPost("register")]
-        public IActionResult RegisterAgent([FromBody] AgentInfo agentInfo)
+        public IActionResult RegisterAgent([FromBody] AgentInfoDto request)
         {
-            if (agentInfo != null)
-            {
-                _agentPool.Add(agentInfo);
-            }
+
+            _agentRepository.Create(_mapper.Map<AgentInfo>(request));
             return Ok();
         }
 
         [HttpPut("enable/{agentId}")]
         public IActionResult EnableAgentById([FromRoute] int agentId)
         {
-            if (_agentPool.Agents.ContainsKey(agentId))
-                _agentPool.Agents[agentId].Enable = true;
+            _agentRepository.EnableAgentById(agentId);
             return Ok();
         }
 
         [HttpPut("disable/{agentId}")]
         public IActionResult DisableAgentById([FromRoute] int agentId)
         {
-            if (_agentPool.Agents.ContainsKey(agentId))
-                _agentPool.Agents[agentId].Enable = false;
+            _agentRepository.DisableAgentById(agentId);
             return Ok();
         }
 
-        // TODO: Домашнее задание [Пункт 1]
-        // Добавьте метод в контроллер агентов проекта, относящегося к менеджеру метрик, который
-        // позволяет получить список зарегистрированных в системе объектов.
-        
-        [HttpGet("get")]
+
+        [HttpGet("getAll")]
         public ActionResult<AgentInfo[]> GetAllAgents()
         {
-            return Ok(_agentPool.Get());
+            return Ok(_agentRepository.GetAll());
+        }
+
+        [HttpDelete("delete/{agentId}")]
+        public IActionResult Delete([FromRoute] int agentId)
+        {
+            _agentRepository.Delete(agentId);
+            return Ok();
         }
 
 

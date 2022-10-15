@@ -11,8 +11,8 @@
 
         public void Add(AgentInfo value)
         {
-            if (!_agents.ContainsKey(value.AgentId))
-                _agents.Add(value.AgentId, value);
+            if (!_agents.ContainsKey(value.id))
+                _agents.Add(value.id, value);
         }
         public AgentInfo[] Get()
         {

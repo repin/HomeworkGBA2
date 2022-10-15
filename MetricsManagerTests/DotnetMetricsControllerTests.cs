@@ -1,20 +1,21 @@
 ﻿using MetricsManager.Controllers;
+using MetricsManager.Services.Client;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Moq;
 
 namespace MetricsManagerTests
 {
-    public class DotNetMetricsControllerTests
+    public class DotnetMetricsControllerTests
     {
         private DotnetMetricsController _dotnetMetricsController;
+        private Mock<IMetricsAgentClient> _metricsAgentClient;
+        private Mock<IHttpClientFactory> _httpClientFactory;
 
-        public DotNetMetricsControllerTests()
+        public DotnetMetricsControllerTests()
         {
-            _dotnetMetricsController = new DotnetMetricsController();
+            _metricsAgentClient = new Mock<IMetricsAgentClient>();
+            _httpClientFactory = new Mock<IHttpClientFactory>();
+            _dotnetMetricsController = new DotnetMetricsController(_metricsAgentClient.Object, _httpClientFactory.Object);
         }
 
         [Fact]
@@ -36,7 +37,7 @@ namespace MetricsManagerTests
             TimeSpan fromTime = TimeSpan.FromSeconds(0);
             TimeSpan toTime = TimeSpan.FromSeconds(100);
 
-            var result = _dotnetMetricsController.GetMetricsFromAll( fromTime, toTime);
+            var result = _dotnetMetricsController.GetMetricsFromAll(fromTime, toTime);
 
             Assert.IsAssignableFrom<IActionResult>(result);
         }

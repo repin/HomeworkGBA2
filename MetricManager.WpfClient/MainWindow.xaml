@@ -1,0 +1,18 @@
+﻿<Window x:Class="MetricsManager.WpfClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MetricsManager.WpfClient"
+        mc:Ignorable="d"
+        Title="Metrics" Height="700" Width="900" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <local:CpuChart HorizontalAlignment="Left" Margin="10,10,0,0" Width="400" Loaded="CpuChart_Loaded" Height="300" VerticalAlignment="Top"/>
+        <local:RamChart HorizontalAlignment="Left" Margin="10,350,0,0" VerticalAlignment="Top" Width="400" Height="300"/>
+        <local:NetworkChart HorizontalAlignment="Left" Margin="450,350,0,0" VerticalAlignment="Top" Height="300" Width="400
+                            "/>
+        <local:HddChart HorizontalAlignment="Left" Margin="450,10,0,0" VerticalAlignment="Top" Height="300" Width="400"/>
+
+
+    </Grid>
+</Window>
